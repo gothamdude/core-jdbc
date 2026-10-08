@@ -1,5 +1,9 @@
 # com.gothamdude.core-jdbc
-A reusable Spring-JDBC wrapper library (not a runnable application) that provides base classes for CRUD repositories using `NamedParameterJdbcTemplate`. Targets Java 21, Spring 6.2, Spring Boot 3.5. Packaged as a JAR for downstream Spring Boot projects.
+
+A reusable Spring-JDBC wrapper library (not a runnable application) that provides base classes for CRUD repositories using `NamedParameterJdbcTemplate`. 
+Targets Java 21, Spring 6.2, Spring Boot 3.5. 
+Packaged as a JAR for downstream Spring Boot projects.
+
 
 ## Build & Test Commands
 
@@ -9,7 +13,6 @@ mvn test                   # run all tests
 mvn test -Dtest=ClassName  # run a single test class
 mvn test -Dtest=ClassName#methodName  # run a single test method
 ```
-
 Surefire requires JVM args `-XX:+EnableDynamicAgentLoading -Xshare:off` (already configured in pom.xml).
 
 ## Architecture
