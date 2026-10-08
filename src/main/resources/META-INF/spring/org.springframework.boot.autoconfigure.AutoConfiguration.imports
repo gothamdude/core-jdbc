@@ -1,1 +1,1 @@
-com.gothamdude.core.data.config.DbConfig
+com.gothamdude.core.jdbc.config.DbConfig
