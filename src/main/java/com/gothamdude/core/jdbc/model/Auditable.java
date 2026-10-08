@@ -7,18 +7,18 @@ public interface Auditable {
 
     Instant getCreatedTs();
 
-    void setCreatedTs(Instant ts);
-
     String getCreatedBy();
+
+    Instant getUpdatedTs();
+
+    String getUpdatedBy();
+
+    void setCreatedTs(Instant ts);
 
     void setCreatedBy(String user);
 
-    Instant getLastUpdatedTs();
+    void setUpdatedTs(Instant ts);
 
-    void setLastUpdatedTs(Instant ts);
-
-    String getLastUpdatedBy();
-
-    void setLastUpdatedBy(String user);
+    void setUpdatedBy(String user);
 
 }
