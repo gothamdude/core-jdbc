@@ -17,16 +17,17 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <lombok.version>1.18.30</lombok.version>
         <h2.version>2.2.224</h2.version>
-        <spring.version>6.2.15</spring.version>
-        <spring.boot.config.version>3.5.6</spring.boot.config.version>
+        <spring.version>7.0.8</spring.version>
+        <spring.boot.config.version>4.0.8</spring.boot.config.version>
         <slf4j.version>2.0.17</slf4j.version>
-        <logback.version>1.5.25</logback.version>
+        <logback.version>1.6.3</logback.version>
         <junit.version>5.10.2</junit.version>
         <assertj.version>3.27.7</assertj.version>
         <mockito.version>5.12.0</mockito.version>
-        <postgresql.version>42.7.7</postgresql.version>
-        <hikaricp.version>6.3.3</hikaricp.version>
+        <postgresql.version>42.7.12</postgresql.version>
+        <hikaricp.version>7.0.2</hikaricp.version>
         <jakarta.validation.api.version>3.0.2</jakarta.validation.api.version>
+        <guava.version>33.7.1-jre</guava.version>
     </properties>
 
     <dependencies>
@@ -44,6 +45,11 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
             <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <version>${spring.boot.config.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -129,6 +135,17 @@
             <artifactId>spring-test</artifactId>
             <version>${spring.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>jspecify</artifactId>
+                    <groupId>org.jspecify</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
