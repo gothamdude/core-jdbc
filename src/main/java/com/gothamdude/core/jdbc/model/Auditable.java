@@ -1,7 +1,6 @@
 package com.gothamdude.core.jdbc.model;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 public interface Auditable {
 
