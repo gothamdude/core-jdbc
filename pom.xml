@@ -27,6 +27,7 @@
         <postgresql.version>42.7.7</postgresql.version>
         <hikaricp.version>6.3.3</hikaricp.version>
         <jakarta.validation.api.version>3.0.2</jakarta.validation.api.version>
+        <guava.version>33.7.1-jre</guava.version>
     </properties>
 
     <dependencies>
@@ -44,6 +45,11 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
             <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <version>${spring.boot.config.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -129,6 +135,11 @@
             <artifactId>spring-test</artifactId>
             <version>${spring.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
         </dependency>
     </dependencies>
 
