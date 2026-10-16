@@ -2,7 +2,7 @@ package com.gothamdude.core.jdbc.model;
 
 import java.time.Instant;
 
-public abstract class DomainEntity<ID> extends BaseEntity<ID> implements Auditable, Activable {
+public abstract class DomainEntity<ID> extends BaseEntity<ID> implements Auditable, SoftDeletable {
 
     private Instant createdTs;
     private String createdBy;
@@ -53,13 +53,12 @@ public abstract class DomainEntity<ID> extends BaseEntity<ID> implements Auditab
 
 
     @Override
-    public boolean getActiveFlag() {
-        return activeFlag;
+    public boolean isActive() {
+        return false;
     }
 
     @Override
-    public void setActiveFlag(boolean activeFlag) {
-        this.activeFlag = activeFlag;
-    }
+    public void setActive(boolean active) {
 
+    }
 }

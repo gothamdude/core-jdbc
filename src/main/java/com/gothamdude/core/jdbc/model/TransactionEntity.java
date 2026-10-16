@@ -5,18 +5,12 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-public abstract class TransactionEntity extends BaseEntity<Long> {
+public abstract class TransactionEntity extends BaseEntity<Long> implements CreateAudit {
 
-    @Getter
-    @Setter
-    private Long Id;
+    @Getter @Setter private Long id;
 
-    @Getter
-    @Setter
-    private Instant createdTs;
+    @Getter @Setter private Instant createdTs;
 
-    @Getter
-    @Setter
-    private String createdBy;
+    @Getter @Setter private String createdBy;
 
 }
