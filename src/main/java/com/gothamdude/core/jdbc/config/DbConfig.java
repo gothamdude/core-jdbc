@@ -1,5 +1,6 @@
 package com.gothamdude.core.jdbc.config;
 
+import com.gothamdude.core.jdbc.model.AuditorProvider;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.time.Clock;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -64,5 +66,18 @@ public class DbConfig {
         log.info("Configuring transactionManager with dataSource: {}", dataSource.getClass().getSimpleName());
         return new DataSourceTransactionManager(dataSource);
     }
+
+    @Bean
+    @ConditionalOnMissingBean(AuditorProvider.class)
+    public AuditorProvider auditorProvider() {
+        return () -> "system";
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(Clock.class)
+    public Clock clock() {
+        return Clock.systemUTC();
+    }
+
 
 }
