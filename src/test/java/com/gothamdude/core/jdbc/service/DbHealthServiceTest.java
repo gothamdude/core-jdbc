@@ -8,10 +8,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.StatementCallback;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -107,39 +110,55 @@ class DbHealthServiceTest {
 
     // --- testConnection ---
 
+    // Runs the StatementCallback passed to jdbcTemplate.execute(...) against the
+    // supplied statement, mirroring what JdbcTemplate does at runtime.
+    @SuppressWarnings("unchecked")
+    private void runCallbackAgainst(Statement statement) {
+        when(jdbcTemplate.execute(any(StatementCallback.class))).thenAnswer(invocation -> {
+            StatementCallback<?> callback = invocation.getArgument(0);
+            return callback.doInStatement(statement);
+        });
+    }
+
+    private Statement healthyStatement() throws SQLException {
+        Statement statement = mock(Statement.class);
+        ResultSet rs = mock(ResultSet.class);
+        when(statement.executeQuery("SELECT 1")).thenReturn(rs);
+        when(rs.next()).thenReturn(true);
+        when(rs.getInt(1)).thenReturn(1);
+        return statement;
+    }
+
     @Test
-    void testConnectionShouldReturnTrueWhenDatabaseIsHealthy() {
-        when(jdbcTemplate.queryForObject("SELECT 1", Integer.class)).thenReturn(1);
+    void testConnectionShouldReturnTrueWhenDatabaseIsHealthy() throws SQLException {
+        runCallbackAgainst(healthyStatement());
         assertThat(dbHealthService.testConnection(5)).isTrue();
     }
 
     @Test
-    void testConnectionShouldSetTimeoutBeforeQuery() {
-        when(jdbcTemplate.queryForObject("SELECT 1", Integer.class)).thenReturn(1);
+    void testConnectionShouldSetTimeoutOnTheStatement() throws SQLException {
+        Statement statement = healthyStatement();
+        runCallbackAgainst(statement);
+
         dbHealthService.testConnection(5);
-        verify(jdbcTemplate).setQueryTimeout(5);
+
+        verify(statement).setQueryTimeout(5);
     }
 
     @Test
-    void testConnectionShouldResetTimeoutToThirtyInFinally() {
-        when(jdbcTemplate.queryForObject("SELECT 1", Integer.class)).thenReturn(1);
+    void testConnectionShouldNotMutateTheSharedTemplateTimeout() throws SQLException {
+        runCallbackAgainst(healthyStatement());
+
         dbHealthService.testConnection(5);
-        verify(jdbcTemplate).setQueryTimeout(30);
+
+        verify(jdbcTemplate, never()).setQueryTimeout(anyInt());
     }
 
     @Test
-    void testConnectionShouldReturnFalseWhenSetTimeoutThrows() {
-        // Only stub the specific timeout value (1); the finally-block reset to 30 must NOT throw
-        doThrow(new RuntimeException("cannot set timeout")).when(jdbcTemplate).setQueryTimeout(1);
+    void testConnectionShouldReturnFalseWhenTheProbeFails() {
+        when(jdbcTemplate.execute(any(StatementCallback.class)))
+                .thenThrow(new RuntimeException("cannot run probe"));
+
         assertThat(dbHealthService.testConnection(1)).isFalse();
-    }
-
-    @Test
-    void testConnectionShouldStillResetTimeoutWhenQueryFails() {
-        when(jdbcTemplate.queryForObject("SELECT 1", Integer.class))
-                .thenThrow(new RuntimeException("query failed"));
-        dbHealthService.testConnection(5);
-        // finally block should still reset to 30
-        verify(jdbcTemplate).setQueryTimeout(30);
     }
 }

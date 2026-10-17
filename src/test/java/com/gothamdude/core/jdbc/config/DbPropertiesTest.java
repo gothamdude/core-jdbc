@@ -28,6 +28,11 @@ class DbPropertiesTest {
     }
 
     @Test
+    void shouldHaveDefaultConnectionTimeout() {
+        assertThat(new DbProperties().getConnectionTimeout()).isEqualTo(30);
+    }
+
+    @Test
     void shouldHaveDefaultFetchSize() {
         assertThat(new DbProperties().getFetchSize()).isEqualTo(1000);
     }
@@ -72,6 +77,13 @@ class DbPropertiesTest {
         DbProperties props = new DbProperties();
         props.setQueryTimeout(60);
         assertThat(props.getQueryTimeout()).isEqualTo(60);
+    }
+
+    @Test
+    void shouldSetAndGetConnectionTimeout() {
+        DbProperties props = new DbProperties();
+        props.setConnectionTimeout(45);
+        assertThat(props.getConnectionTimeout()).isEqualTo(45);
     }
 
     @Test

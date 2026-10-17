@@ -148,6 +148,7 @@ class DbConfigIntegrationTest {
         props.setMaxPoolSize(4);
         props.setMinPoolSize(2);
         props.setQueryTimeout(20);
+        props.setConnectionTimeout(25);
         props.setFetchSize(100);
 
         HikariDataSource ds = new DbConfig(props).dataSource();
@@ -156,7 +157,7 @@ class DbConfigIntegrationTest {
             assertThat(ds.getMinimumIdle()).isEqualTo(2);
             assertThat(ds.getJdbcUrl()).isEqualTo("jdbc:h2:mem:hikari_cfg_test;DB_CLOSE_DELAY=-1");
             assertThat(ds.getDriverClassName()).isEqualTo("org.h2.Driver");
-            assertThat(ds.getConnectionTimeout()).isEqualTo(20_000L);
+            assertThat(ds.getConnectionTimeout()).isEqualTo(25_000L);
         } finally {
             ds.close();
         }

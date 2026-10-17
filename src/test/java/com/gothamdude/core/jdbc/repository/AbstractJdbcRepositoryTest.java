@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -53,8 +55,8 @@ class AbstractJdbcRepositoryTest {
             return new MapSqlParameterSource("id", e.getId());
         }
         @Override
-        protected MapSqlParameterSource getUpdateParams(TestEntity e, UUID id) {
-            return new MapSqlParameterSource("id", id).addValue("name", e.getName());
+        protected MapSqlParameterSource getUpdateParams(TestEntity e) {
+            return new MapSqlParameterSource("id", e.getId()).addValue("name", e.getName());
         }
         @Override
         protected MapSqlParameterSource getIdParam(UUID id) {
@@ -67,6 +69,16 @@ class AbstractJdbcRepositoryTest {
         MinimalRepository(NamedParameterJdbcTemplate template) { super(template); }
         @Override protected String getTableName() { return "minimal_table"; }
         @Override protected RowMapper<TestEntity> getRowMapper() { return (rs, rowNum) -> new TestEntity(); }
+    }
+
+    // --- Repository exposing both templates, to verify constructor wiring (Option B) ---
+    static class ExposingRepository extends AbstractJdbcRepository<TestEntity, UUID> {
+        ExposingRepository(JdbcTemplate template) { super(template); }
+        ExposingRepository(NamedParameterJdbcTemplate template) { super(template); }
+        @Override protected String getTableName() { return "exposing_table"; }
+        @Override protected RowMapper<TestEntity> getRowMapper() { return (rs, rowNum) -> new TestEntity(); }
+        JdbcTemplate jdbcTemplate() { return jdbcTemplate; }
+        NamedParameterJdbcTemplate namedParameterJdbcTemplate() { return namedParameterJdbcTemplate; }
     }
 
     @Mock
@@ -116,11 +128,11 @@ class AbstractJdbcRepositoryTest {
     @Test
     void findByIdShouldThrowCoreJdbcExceptionOnQueryError() {
         when(namedParameterJdbcTemplate.queryForObject(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class)))
-                .thenThrow(new RuntimeException("DB error"));
+                .thenThrow(new DataAccessResourceFailureException("DB error"));
 
         assertThatThrownBy(() -> repository.findById(testId))
                 .isInstanceOf(CoreJdbcException.class)
-                .hasMessageContaining("Failed to find entity by ID");
+                .hasMessageContaining("test_table");
     }
 
     // --- findAll ---
@@ -145,26 +157,26 @@ class AbstractJdbcRepositoryTest {
     @Test
     void findAllShouldThrowCoreJdbcExceptionOnQueryError() {
         when(namedParameterJdbcTemplate.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class)))
-                .thenThrow(new RuntimeException("DB error"));
+                .thenThrow(new DataAccessResourceFailureException("DB error"));
 
         assertThatThrownBy(() -> repository.findAll())
                 .isInstanceOf(CoreJdbcException.class)
-                .hasMessageContaining("Failed to find all entities");
+                .hasMessageContaining("test_table");
     }
 
     // --- count ---
 
     @Test
     void countShouldReturnRowCount() {
-        when(namedParameterJdbcTemplate.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Integer.class)))
-                .thenReturn(7);
+        when(namedParameterJdbcTemplate.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class)))
+                .thenReturn(7L);
 
         assertThat(repository.count()).isEqualTo(7);
     }
 
     @Test
     void countShouldReturnZeroWhenQueryReturnsNull() {
-        when(namedParameterJdbcTemplate.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Integer.class)))
+        when(namedParameterJdbcTemplate.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class)))
                 .thenReturn(null);
 
         assertThat(repository.count()).isEqualTo(0);
@@ -172,12 +184,12 @@ class AbstractJdbcRepositoryTest {
 
     @Test
     void countShouldThrowCoreJdbcExceptionOnError() {
-        when(namedParameterJdbcTemplate.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Integer.class)))
-                .thenThrow(new RuntimeException("DB error"));
+        when(namedParameterJdbcTemplate.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class)))
+                .thenThrow(new DataAccessResourceFailureException("DB error"));
 
         assertThatThrownBy(() -> repository.count())
                 .isInstanceOf(CoreJdbcException.class)
-                .hasMessageContaining("Failed to count entities");
+                .hasMessageContaining("test_table");
     }
 
     // --- insert ---
@@ -194,7 +206,7 @@ class AbstractJdbcRepositoryTest {
 
         assertThatThrownBy(() -> repository.insert(testEntity))
                 .isInstanceOf(CoreJdbcException.class)
-                .hasMessageContaining("Insert operation affected 0 rows");
+                .hasMessageContaining("Insert affected 0 rows");
     }
 
     @Test
@@ -203,17 +215,17 @@ class AbstractJdbcRepositoryTest {
 
         assertThatThrownBy(() -> repository.insert(testEntity))
                 .isInstanceOf(CoreJdbcException.class)
-                .hasMessageContaining("Insert operation affected 2 rows");
+                .hasMessageContaining("Insert affected 2 rows");
     }
 
     @Test
     void insertShouldThrowCoreJdbcExceptionOnDbError() {
         when(namedParameterJdbcTemplate.update(anyString(), any(MapSqlParameterSource.class)))
-                .thenThrow(new RuntimeException("DB error"));
+                .thenThrow(new DataAccessResourceFailureException("DB error"));
 
         assertThatThrownBy(() -> repository.insert(testEntity))
                 .isInstanceOf(CoreJdbcException.class)
-                .hasMessageContaining("Failed to insert entity");
+                .hasMessageContaining("test_table");
     }
 
     // --- update ---
@@ -221,35 +233,27 @@ class AbstractJdbcRepositoryTest {
     @Test
     void updateShouldReturnOneWhenSuccessful() {
         when(namedParameterJdbcTemplate.update(anyString(), any(MapSqlParameterSource.class))).thenReturn(1);
-        assertThat(repository.update(testEntity, testId)).isEqualTo(1);
+        assertThat(repository.update(testEntity)).isEqualTo(1);
     }
 
     @Test
-    void updateShouldThrowCoreJdbcExceptionWhenZeroRowsAffected() {
+    void updateShouldThrowNotFoundWhenZeroRowsAffected() {
         when(namedParameterJdbcTemplate.update(anyString(), any(MapSqlParameterSource.class))).thenReturn(0);
 
-        assertThatThrownBy(() -> repository.update(testEntity, testId))
-                .isInstanceOf(CoreJdbcException.class)
-                .hasMessageContaining("Update operation affected 0 rows");
-    }
-
-    @Test
-    void updateShouldThrowCoreJdbcExceptionWhenMoreThanOneRowAffected() {
-        when(namedParameterJdbcTemplate.update(anyString(), any(MapSqlParameterSource.class))).thenReturn(3);
-
-        assertThatThrownBy(() -> repository.update(testEntity, testId))
-                .isInstanceOf(CoreJdbcException.class)
-                .hasMessageContaining("Update operation affected 3 rows");
+        assertThatThrownBy(() -> repository.update(testEntity))
+                .isInstanceOfSatisfying(CoreJdbcException.class, ex ->
+                        assertThat(ex.getErrorCode()).isEqualTo(CoreJdbcException.ErrorCode.NOT_FOUND))
+                .hasMessageContaining("No row with id");
     }
 
     @Test
     void updateShouldThrowCoreJdbcExceptionOnDbError() {
         when(namedParameterJdbcTemplate.update(anyString(), any(MapSqlParameterSource.class)))
-                .thenThrow(new RuntimeException("DB error"));
+                .thenThrow(new DataAccessResourceFailureException("DB error"));
 
-        assertThatThrownBy(() -> repository.update(testEntity, testId))
+        assertThatThrownBy(() -> repository.update(testEntity))
                 .isInstanceOf(CoreJdbcException.class)
-                .hasMessageContaining("Failed to update entity");
+                .hasMessageContaining("test_table");
     }
 
     // --- deleteById ---
@@ -270,11 +274,11 @@ class AbstractJdbcRepositoryTest {
     @Test
     void deleteByIdShouldThrowCoreJdbcExceptionOnDbError() {
         when(namedParameterJdbcTemplate.update(anyString(), any(MapSqlParameterSource.class)))
-                .thenThrow(new RuntimeException("DB error"));
+                .thenThrow(new DataAccessResourceFailureException("DB error"));
 
         assertThatThrownBy(() -> repository.deleteById(testId))
                 .isInstanceOf(CoreJdbcException.class)
-                .hasMessageContaining("Failed to delete entity by ID");
+                .hasMessageContaining("test_table");
     }
 
     // --- deleteAll ---
@@ -294,11 +298,11 @@ class AbstractJdbcRepositoryTest {
     @Test
     void deleteAllShouldThrowCoreJdbcExceptionOnDbError() {
         when(namedParameterJdbcTemplate.update(anyString(), any(MapSqlParameterSource.class)))
-                .thenThrow(new RuntimeException("DB error"));
+                .thenThrow(new DataAccessResourceFailureException("DB error"));
 
         assertThatThrownBy(() -> repository.deleteAll())
                 .isInstanceOf(CoreJdbcException.class)
-                .hasMessageContaining("Failed to delete all entities");
+                .hasMessageContaining("test_table");
     }
 
     // --- default unsupported operations on minimal repository ---
@@ -351,5 +355,24 @@ class AbstractJdbcRepositoryTest {
         assertThatThrownBy(minimal::getInsertSql)
                 .isInstanceOf(UnsupportedOperationException.class)
                 .hasMessageContaining("minimal_table");
+    }
+
+    // --- constructor wiring (Option B: JdbcTemplate <-> NamedParameterJdbcTemplate) ---
+
+    @Test
+    void namedParameterConstructorShouldDeriveTheUnderlyingJdbcTemplate() {
+        JdbcTemplate jt = new JdbcTemplate();
+        ExposingRepository repo = new ExposingRepository(new NamedParameterJdbcTemplate(jt));
+
+        assertThat(repo.jdbcTemplate()).isSameAs(jt);
+    }
+
+    @Test
+    void jdbcTemplateConstructorShouldWrapItAndExposeBothTemplates() {
+        JdbcTemplate jt = new JdbcTemplate();
+        ExposingRepository repo = new ExposingRepository(jt);
+
+        assertThat(repo.jdbcTemplate()).isSameAs(jt);
+        assertThat(repo.namedParameterJdbcTemplate().getJdbcTemplate()).isSameAs(jt);
     }
 }

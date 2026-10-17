@@ -39,6 +39,7 @@ class DbConfigTest {
         dbProperties.setMaxPoolSize(5);
         dbProperties.setMinPoolSize(1);
         dbProperties.setQueryTimeout(15);
+        dbProperties.setConnectionTimeout(20);
         dbProperties.setFetchSize(200);
         dbConfig = new DbConfig(dbProperties);
     }
@@ -135,8 +136,8 @@ class DbConfigTest {
     void shouldCreateHikariDataSourceWithConnectionTimeout() {
         HikariDataSource ds = dbConfig.dataSource();
         try {
-            // queryTimeout (15s) * 1000 = 15000ms
-            assertThat(ds.getConnectionTimeout()).isEqualTo(15_000L);
+            // connectionTimeout (20s) * 1000 = 20000ms — independent of queryTimeout
+            assertThat(ds.getConnectionTimeout()).isEqualTo(20_000L);
         } finally {
             ds.close();
         }
