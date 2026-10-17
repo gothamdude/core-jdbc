@@ -8,7 +8,7 @@ public abstract class DomainEntity<ID> extends BaseEntity<ID> implements Auditab
     private String createdBy;
     private Instant updatedTs;
     private String updatedBy;
-    private boolean activeFlag = true;
+    private boolean active = true;
 
 
     @Override
@@ -54,11 +54,11 @@ public abstract class DomainEntity<ID> extends BaseEntity<ID> implements Auditab
 
     @Override
     public boolean isActive() {
-        return false;
+        return active;
     }
 
     @Override
     public void setActive(boolean active) {
-
+        this.active = active;
     }
 }
