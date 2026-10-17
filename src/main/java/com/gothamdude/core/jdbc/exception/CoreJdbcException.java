@@ -12,7 +12,11 @@ public class CoreJdbcException extends RuntimeException {
         CONFIGURATION_ERROR,
         MAPPING_FAILURE,
         QUERY_FAILURE,
-        TRANSACTION_FAILURE
+        TRANSACTION_FAILURE,
+        NOT_FOUND,
+        DUPLICATE_KEY,
+        CONSTRAINT_VIOLATION,
+        OPTIMISTIC_LOCK
     }
 
     public CoreJdbcException(ErrorCode errorCode, String message) {

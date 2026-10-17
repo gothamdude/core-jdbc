@@ -28,8 +28,13 @@ public class DbProperties {
     @Min(1)
     private int minPoolSize = 2;
 
+    // Max seconds a JDBC statement may run before timing out.
     @Min(1)
     private int queryTimeout = 30;
+
+    // Max seconds to wait for a connection from the pool (Hikari; applied in ms).
+    @Min(1)
+    private int connectionTimeout = 30;
 
     @Min(1)
     private int fetchSize = 1000;

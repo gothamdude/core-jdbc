@@ -73,8 +73,8 @@ class CoreJdbcExceptionTest {
     }
 
     @Test
-    void errorCodeEnumShouldHaveFiveValues() {
-        assertThat(ErrorCode.values()).hasSize(5);
+    void errorCodeEnumShouldHaveNineValues() {
+        assertThat(ErrorCode.values()).hasSize(9);
     }
 
     @Test
